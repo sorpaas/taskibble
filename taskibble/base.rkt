@@ -2,7 +2,6 @@
 
 (require "decode.rkt"
          "core.rkt"
-         "manual-struct.rkt"
          "decode-struct.rkt"
          "html-properties.rkt"
          "tag.rkt"
@@ -839,12 +838,7 @@
   ;;       (and (not (string-ci<? s2 s1)) (string<? s1 s2))))
   (define (get-desc entry)
     (let ([desc (cadddr entry)])
-      (cond [(exported-index-desc? desc)
-             (cons 'libs (map (lambda (l)
-                                (format "~s" l))
-                              (exported-index-desc-from-libs desc)))]
-            [(module-path-index-desc? desc) '(mod)]
-            [(part-index-desc? desc) '(part)]
+      (cond [(part-index-desc? desc) '(part)]
             [(delayed-index-desc? desc) '(delayed)]
             [else '(#f)])))
   ;; parts first, then modules, then bindings, delayed means it's not

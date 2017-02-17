@@ -3,18 +3,12 @@
          "render.rkt"
          scheme/cmdline
          raco/command-name
-         (prefix-in text:     "text-render.rkt")
-         (prefix-in markdown: "markdown-render.rkt")
-         (prefix-in html:     "html-render.rkt")
          (prefix-in latex:    "latex-render.rkt")
          (prefix-in pdf:      "pdf-render.rkt"))
 
 (module test racket/base)
 
-(define multi-html:render-mixin
-  (lambda (%) (html:render-multi-mixin (html:render-mixin %))))
-
-(define current-render-mixin       (make-parameter html:render-mixin))
+(define current-render-mixin       (make-parameter pdf:xelatex-render-mixin))
 (define current-html               (make-parameter #t))
 (define current-dest-directory     (make-parameter #f))
 (define current-dest-name          (make-parameter #f))
@@ -76,12 +70,12 @@
     (unless (member sym '(ps pdf svg png gif))
       (raise-user-error 'scribble "bad format for ++convert: ~s" fmt))
     (current-image-prefs (cons sym (current-image-prefs)))]
-   [("++style") file "add given .tex file after others"
+   [("++style") file "add given .css/.tex file after others"
     (current-style-extra-files (cons file (current-style-extra-files)))]
    #:once-each
-   [("--style") file "use given base .tex file"
+   [("--style") file "use given base .css/.tex file"
     (current-style-file file)]
-   [("--prefix") file "use given .tex prefix (for doctype/documentclass)"
+   [("--prefix") file "use given .html/.tex prefix (for doctype/documentclass)"
     (current-prefix-file file)]
    #:multi
    [("++extra") file "add given file"

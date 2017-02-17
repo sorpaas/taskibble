@@ -2,7 +2,7 @@
 (require racket/contract/base
          syntax/modcollapse
          setup/collects
-         scribble/core
+         "core.rkt"
          racket/match
          ;; Needed to normalize planet version numbers:
          (only-in planet/resolver get-planet-module-path/pkg)

@@ -1,5 +1,5 @@
 #lang scheme/base
 (define-syntax-rule (out)
-  (begin (require scribble/doclang)
-         (provide (all-from-out scribble/doclang))))
+  (begin (require taskibble/doclang)
+         (provide (all-from-out taskibble/doclang))))
 (out)

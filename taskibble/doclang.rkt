@@ -1,11 +1,8 @@
 #lang racket/base
 
-;; A slightly nicer version of doclang where the parameters are keyword-based
-;; rather than positional.  Delegates off to the original doclang.
-
-(require (prefix-in doclang: "private/doclang.rkt")
+(require "decode.rkt"
          (for-syntax racket/base
-                     syntax/parse)) 
+                     syntax/kerncase))
 
 (provide (except-out (all-from-out racket/base) #%module-begin)
          (rename-out [*module-begin #%module-begin]))
@@ -13,16 +10,84 @@
 ;; Module wrapper ----------------------------------------
 
 (define-syntax (*module-begin stx)
-  (syntax-parse stx
-    [(_ (~or (~optional (~seq #:id id))
-             (~optional (~seq #:post-process post-process))
-             (~optional (~seq #:exprs exprs)))
-        ...
-        . body)
-     (with-syntax ([id (or (attribute id) 
-                           #'doc)]
-                   [post-process (or (attribute post-process)
-                                     #'values)]
-                   [exprs (or (attribute exprs)
-                              #'())])
-       #'(doclang:#%module-begin id post-process exprs . body))]))
+  (syntax-case stx ()
+    [(_ id post-process exprs . body)
+     #'(#%module-begin
+        (doc-begin id post-process exprs . body))]))
+
+(define-syntax (doc-begin stx)
+  (syntax-case stx ()
+    [(_ m-id post-process exprs)
+     #`(begin
+         (define m-id (post-process (decode (list . #,(reverse (syntax->list #'exprs))))))
+         (provide m-id))]
+    [(_ m-id post-process exprs . body)
+     ;; `body' probably starts with lots of string constants; it's
+     ;; slow to trampoline on every string, so do them in a batch
+     ;; here:
+     (let loop ([body #'body]
+                [accum null])
+       (syntax-case body ()
+         [(s . rest)
+          (string? (syntax-e #'s))
+          (loop #'rest (cons #'s accum))]
+         [()
+          (with-syntax ([(accum ...) accum])
+            #`(doc-begin m-id post-process (accum ... . exprs)))]
+         [(body1 . body)
+          (with-syntax ([exprs (append accum #'exprs)])
+            (let ([expanded (local-expand
+                             #'body1 'module
+                             (append (kernel-form-identifier-list)
+                                     (syntax->list #'(provide
+                                                      require))))])
+              (syntax-case expanded (begin)
+                [(begin body1 ...)
+                 #`(doc-begin m-id post-process exprs body1 ... . body)]
+                [(id . rest)
+                 (and (identifier? #'id)
+                      (ormap (lambda (kw) (free-identifier=? #'id kw))
+                             (syntax->list #'(require
+                                              provide
+                                              define-values
+                                              define-syntaxes
+                                              begin-for-syntax
+                                              module
+                                              module*
+                                              #%require
+                                              #%provide
+                                              #%declare))))
+                 #`(begin #,expanded (doc-begin m-id post-process exprs . body))]
+                [_else
+                 #`(doc-begin m-id post-process 
+                              ((pre-part #,expanded body1) . exprs) 
+                              . body)])))]))]))
+
+(define-syntax (pre-part stx)
+  (syntax-case stx ()
+    [(_ s e)
+     (if (string? (syntax-e #'s))
+         #'s
+         (with-syntax ([loc (datum->syntax #f 'loc #'e)])
+           #'(check-pre-part e (quote-syntax loc))))]))
+
+(define (check-pre-part v loc-stx)
+  (if (pre-part? v)
+      v
+      (error
+       (format
+        "~a: not valid in document body (need a pre-part for decode) in: ~e"
+        (cond
+         [(and (syntax-source loc-stx)
+               (syntax-line loc-stx))
+          (format "~a:~a:~a"
+                  (syntax-source loc-stx)
+                  (syntax-line loc-stx)
+                  (syntax-column loc-stx))]
+         [(and (syntax-source loc-stx)
+               (syntax-position loc-stx))
+          (format "~a:::~a"
+                  (syntax-source loc-stx)
+                  (syntax-position loc-stx))]
+         [else 'document])
+        v))))

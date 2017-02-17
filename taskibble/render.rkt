@@ -5,8 +5,7 @@
          "xref.rkt"
          racket/file
          racket/class
-         racket/contract/base
-         (prefix-in html:  "html-render.rkt"))
+         racket/contract/base)
 
 (provide/contract 
  [render (((listof part?)
@@ -32,7 +31,7 @@
 
 (define (render docs
                 names
-                #:render-mixin [render-mixin html:render-mixin]
+                #:render-mixin render-mixin
                 #:dest-dir [dest-dir #f]
                 #:helper-file-prefix [helper-file-prefix #f]
                 #:prefix-file [prefix-file #f]

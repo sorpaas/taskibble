@@ -1,7 +1,7 @@
 #lang scheme/base
-(require scribble/core
-         scribble/latex-properties
-         scribble/html-properties
+(require taskibble/core
+         taskibble/latex-properties
+         taskibble/html-properties
          setup/collects)
 
 (provide scribble-file
