@@ -12,6 +12,7 @@
                "syntax-color-lib"
                "sandbox-lib"
                "typed-racket-lib"
+               "datalog"
                ))
 
 (define build-deps '("rackunit-lib"))
