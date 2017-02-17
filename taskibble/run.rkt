@@ -44,23 +44,6 @@
   (command-line
    #:program (short-program+command-name)
    #:once-any
-   [("--html") "generate HTML-format output file (the default)"
-    (current-html #t)
-    (current-render-mixin html:render-mixin)]
-   [("--htmls") "generate HTML-format output directory"
-    (current-html #t)
-    (current-render-mixin multi-html:render-mixin)]
-   [("--html-tree") n "generate HTML-format output directories <n> deep"
-    (let ([nv (string->number n)])
-      (unless (exact-nonnegative-integer? nv)
-        (raise-user-error 'scribble
-                          "invalid depth: ~a"
-                          n))
-      (current-directory-depth nv)
-      (current-html #t)
-      (current-render-mixin (if (zero? nv)
-                                html:render-mixin
-                                multi-html:render-mixin)))]
    [("--latex") "generate LaTeX-format output"
     (current-html #f)
     (current-render-mixin latex:render-mixin)]
@@ -79,12 +62,6 @@
       (unless (exact-nonnegative-integer? v)
         (raise-user-error 'scribble (format "bad section depth: ~a" n)))
       (current-render-mixin (latex:make-render-part-mixin v)))]
-   [("--text") "generate text-format output"
-    (current-html #f)
-    (current-render-mixin text:render-mixin)]
-   [("--markdown") "generate markdown-format output"
-    (current-html #f)
-    (current-render-mixin markdown:render-mixin)]
    #:once-each
    [("--dest") dir "write output in <dir>"
     (current-dest-directory dir)]
@@ -99,12 +76,12 @@
     (unless (member sym '(ps pdf svg png gif))
       (raise-user-error 'scribble "bad format for ++convert: ~s" fmt))
     (current-image-prefs (cons sym (current-image-prefs)))]
-   [("++style") file "add given .css/.tex file after others"
+   [("++style") file "add given .tex file after others"
     (current-style-extra-files (cons file (current-style-extra-files)))]
    #:once-each
-   [("--style") file "use given base .css/.tex file"
+   [("--style") file "use given base .tex file"
     (current-style-file file)]
-   [("--prefix") file "use given .html/.tex prefix (for doctype/documentclass)"
+   [("--prefix") file "use given .tex prefix (for doctype/documentclass)"
     (current-prefix-file file)]
    #:multi
    [("++extra") file "add given file"
