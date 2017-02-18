@@ -1,7 +1,7 @@
 #lang scheme/base
-(require taskibble/core
-         taskibble/latex-properties
-         taskibble/html-properties
+(require "../core.rkt"
+         "../latex-properties.rkt"
+         "../html-properties.rkt"
          setup/collects)
 
 (provide scribble-file
