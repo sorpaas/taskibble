@@ -184,10 +184,12 @@
           (define depth (+ (number-depth number) (or (render-part-depth) 0)))
           (define (inc-section-number)
             (printf "\\Sinc~a" (case depth
-                                 [(0 1) "section"]
-                                 [(2) "subsection"]
-                                 [(3) "subsubsection"]
-                                 [(4) "subsubsubsection"]
+                                 [(0 1) "part"]
+                                 [(2) "chapter"]
+                                 [(3) "section"]
+                                 [(4) "subsection"]
+                                 [(5) "subsubsection"]
+                                 [(6) "subsubsubsection"]
                                  [else "subsubsubsubsection"])))
           (cond
            [completely-hidden?
@@ -201,10 +203,12 @@
             (define no-toc? (part-style? d 'toc-hidden))
             (printf "\n\n\\~a~a"
                     (case depth
-                      [(0 1) "sectionNewpage\n\n\\Ssection"]
-                      [(2) "Ssubsection"]
-                      [(3) "Ssubsubsection"]
-                      [(4) "Ssubsubsubsection"]
+                      [(0 1) "Spart"]
+                      [(2) "Schapter"]
+                      [(3) "Ssection"]
+                      [(4) "Ssubsection"]
+                      [(5) "Ssubsubsection"]
+                      [(6) "Ssubsubsubsection"]
                       [else "Ssubsubsubsubsection"])
                     (if no-number? 
                         (if no-toc?

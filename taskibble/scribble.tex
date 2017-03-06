@@ -21,6 +21,7 @@
 \newcommand{\sectionNewpage}{}
 % Inserted before every book ``part''
 \newcommand{\partNewpage}{\sectionNewpage}
+\newcommand{\chapterNewpage}{\sectionNewpage}
 
 % Hooks for actions within the `document' environment:
 \newcommand{\preDoc}{}
@@ -318,6 +319,7 @@
 % to increment counter numbers
 
 \newcommand{\Sincpart}{\stepcounter{part}}
+\newcommand{\Sincchapter}{\stepcounter{chapter}}
 \newcommand{\Sincsection}{\stepcounter{section}}
 \newcommand{\Sincsubsection}{\stepcounter{subsection}}
 \newcommand{\Sincsubsubsection}{\stepcounter{subsubsection}}
@@ -326,6 +328,7 @@
 
 % sections
 \newcommand{\Spart}[2]{\part[#1]{#2}}
+\newcommand{\Schapter}[2]{\chapter[#1]{#2}}
 \newcommand{\Ssection}[2]{\section[#1]{#2}\let\thesubsection\SOriginalthesubsection}
 \newcommand{\Ssubsection}[2]{\subsection[#1]{#2}\let\thesubsubsection\SOriginalthesubsubsection}
 \newcommand{\Ssubsubsection}[2]{\subsubsection[#1]{#2}}
@@ -336,6 +339,7 @@
 
 % "star" means unnumbered and not in ToC:
 \newcommand{\Spartstar}[1]{\part*{#1}}
+\newcommand{\Schapterstar}[1]{\chapter*{#1}}
 \newcommand{\Ssectionstar}[1]{\section*{#1}\renewcommand*\thesubsection{\arabic{subsection}}\setcounter{subsection}{0}}
 \newcommand{\Ssubsectionstar}[1]{\subsection*{#1}\renewcommand*\thesubsubsection{\arabic{section}.\arabic{subsubsection}}\setcounter{subsubsection}{0}}
 \newcommand{\Ssubsubsectionstar}[1]{\subsubsection*{#1}}
@@ -344,6 +348,7 @@
 
 % "starx" means unnumbered but in ToC:
 \newcommand{\Spartstarx}[2]{\Spartstar{#2}\addcontentsline{toc}{part}{#1}}
+\newcommand{\Schapterstarx}[2]{\Schapterstar{#2}\addcontentsline{toc}{chapter}{#1}}
 \newcommand{\Ssectionstarx}[2]{\Ssectionstar{#2}\addcontentsline{toc}{section}{#1}}
 \newcommand{\Ssubsectionstarx}[2]{\Ssubsectionstar{#2}\addcontentsline{toc}{subsection}{#1}}
 \newcommand{\Ssubsubsectionstarx}[2]{\Ssubsubsectionstar{#2}\addcontentsline{toc}{subsubsection}{#1}}
