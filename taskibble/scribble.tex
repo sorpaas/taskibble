@@ -331,11 +331,13 @@
 \newcommand{\Schapter}[2]{\chapter[#1]{#2}}
 \newcommand{\Ssection}[2]{\section[#1]{#2}\let\thesubsection\SOriginalthesubsection}
 \newcommand{\Ssubsection}[2]{\subsection[#1]{#2}\let\thesubsubsection\SOriginalthesubsubsection}
-\newcommand{\Ssubsubsection}[2]{\subsubsection[#1]{#2}}
+\newcommand{\Ssubsubsection}[2]{
+  \stepcounter{subsubsection}
+  {\textbf{(\Alph{subsubsection}) #2}}}
 \newcommand{\Ssubsubsubsection}[2]{
   \stepcounter{subsubsubsection}
-  {\bf (\Alph{subsubsubsection}) #2}}
-\newcommand{\Ssubsubsubsubsection}[2]{{\bf #2}}
+  {\textbf{#2}}}
+\newcommand{\Ssubsubsubsubsection}[2]{{\textbf{\textit{#2}}}}
 
 % "star" means unnumbered and not in ToC:
 \newcommand{\Spartstar}[1]{\part*{#1}}
@@ -344,7 +346,7 @@
 \newcommand{\Ssubsectionstar}[1]{\subsection*{#1}\renewcommand*\thesubsubsection{\arabic{section}.\arabic{subsubsection}}\setcounter{subsubsection}{0}}
 \newcommand{\Ssubsubsectionstar}[1]{\subsubsection*{#1}}
 \newcommand{\Ssubsubsubsectionstar}[1]{{\bf #1}}
-\newcommand{\Ssubsubsubsubsectionstar}[1]{\Ssubsubsubsectionstar{#1}}
+\newcommand{\Ssubsubsubsubsectionstar}[1]{\textbf{\textit{{#1}}}}
 
 % "starx" means unnumbered but in ToC:
 \newcommand{\Spartstarx}[2]{\Spartstar{#2}\addcontentsline{toc}{part}{#1}}
