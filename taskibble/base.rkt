@@ -777,7 +777,7 @@
 ; XXX unknown contract
 (provide get-index-entries)
 (provide/contract
- [index-block (-> delayed-block?)]
+ [index-block (-> resolve-block?)]
  [index (((or/c string? (listof string?))) ()  #:rest (listof pre-content?) . ->* . index-element?)]
  [index* (((listof string?) (listof any/c)) ()  #:rest (listof pre-content?) . ->* . index-element?)] ; XXX first any/c wrong in docs 
  [as-index (() () #:rest (listof pre-content?) . ->* . index-element?)]
@@ -839,7 +839,7 @@
   (define (get-desc entry)
     (let ([desc (cadddr entry)])
       (cond [(part-index-desc? desc) '(part)]
-            [(delayed-index-desc? desc) '(delayed)]
+            [(resolve-index-desc? desc) '(delayed)]
             [else '(#f)])))
   ;; parts first, then modules, then bindings, delayed means it's not
   ;; the last round, and #f means no desc
@@ -949,22 +949,22 @@
       (if manual-newlines?
         (rows alpha-row '(nbsp) body)
         (apply rows alpha-row '(nbsp) (map list body)))))
-  (make-delayed-block contents))
+  (make-resolve-block contents))
 
 ;; ----------------------------------------
 
 (provide/contract
- [table-of-contents (-> delayed-block?)]
+ [table-of-contents (-> resolve-block?)]
  [local-table-of-contents (() 
                            (#:style (or/c style? string? symbol? (listof symbol?) #f))
-                           . ->* . delayed-block?)])
+                           . ->* . resolve-block?)])
 
 (define (table-of-contents)
-  (make-delayed-block
+  (make-resolve-block
    (lambda (renderer part ri)
      (send renderer table-of-contents part ri))))
 
 (define (local-table-of-contents #:style [style plain])
-  (make-delayed-block
+  (make-resolve-block
    (lambda (renderer part ri)
      (send renderer local-table-of-contents part ri style))))

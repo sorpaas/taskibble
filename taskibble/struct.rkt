@@ -80,7 +80,7 @@
          table-flowss
          make-auxiliary-table auxiliary-table?
 
-         (struct-out delayed-block)
+         (struct-out resolve-block)
 
          (compat-out itemization)
          (rename-out [itemization-blockss itemization-flows]
@@ -112,13 +112,13 @@
 
          (struct-out collected-info)
 
-         (struct-out delayed-element)
-         ; delayed-element-content delayed-block-blocks current-serialize-resolve-info
+         (struct-out resolve-element)
+         ; resolve-element-content resolve-block-blocks current-serialize-resolve-info
          
          (struct-out part-relative-element)
          ; part-relative-element-content collect-info-parents
 
-         (struct-out delayed-index-desc)
+         (struct-out resolve-index-desc)
 
          (struct*-out [collect-element (collect)])
 

@@ -271,8 +271,8 @@
 
     (define/private (no-noindent? p ri)
       (cond
-       [(delayed-block? p)
-        (no-noindent? (delayed-block-blocks p ri) ri)]
+       [(resolve-block? p)
+        (no-noindent? (resolve-block-blocks p ri) ri)]
        [(traverse-block? p)
         (no-noindent? (traverse-block-block p ri) ri)]
        [else

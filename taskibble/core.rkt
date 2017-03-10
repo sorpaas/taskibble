@@ -115,7 +115,7 @@
       (itemization? p)
       (nested-flow? p)
       (compound-paragraph? p)
-      (delayed-block? p)
+      (resolve-block? p)
       (traverse-block? p)))
 
 (define content-symbols
@@ -139,7 +139,7 @@
   (or (string? v)
       (element? v)
       (and (list? v) (andmap content? v))
-      (delayed-element? v)
+      (resolve-element? v)
       (traverse-element? v)
       (part-relative-element? v)
       (multiarg-element? v)
@@ -224,7 +224,7 @@
  [table ([style style?]
          [blockss (and/c (listof (listof (or/c block? (one-of/c 'cont))))
                          same-lengths?)])]
- [delayed-block ([resolve (any/c part? resolve-info? . -> . block?)])]
+ [resolve-block ([resolve (any/c part? resolve-info? . -> . block?)])]
  [itemization ([style style?]
                [blockss (listof (listof block?))])]
  [nested-flow ([style style?]
@@ -394,43 +394,43 @@
 
 ;; ----------------------------------------
 
-;; Delayed element has special serialization support:
-(define-struct delayed-element (resolve sizer plain)
+;; Resolve element has special serialization support:
+(define-struct resolve-element (resolve sizer plain)
   #:property
   prop:serializable
   (make-serialize-info
    (lambda (d)
      (let ([ri (current-serialize-resolve-info)])
        (unless ri
-         (error 'serialize-delayed-element
+         (error 'serialize-resolve-element
                 "current-serialize-resolve-info not set"))
        (with-handlers ([exn:fail:contract?
                         (lambda (exn)
-                          (error 'serialize-delayed-element
-                                 "serialization failed (wrong resolve info? delayed element never rendered?); ~a"
+                          (error 'serialize-resolve-element
+                                 "serialization failed (wrong resolve info? resolve element never rendered?); ~a"
                                  (exn-message exn)))])
-         (vector (delayed-element-content d ri)))))
-   #'deserialize-delayed-element
+         (vector (resolve-element-content d ri)))))
+   #'deserialize-resolve-element
    #f
    (or (current-load-relative-directory) (current-directory)))
   #:transparent)
 
 (provide/contract
- (struct delayed-element ([resolve (any/c part? resolve-info? . -> . content?)]
+ (struct resolve-element ([resolve (any/c part? resolve-info? . -> . content?)]
                           [sizer (-> any)]
                           [plain (-> any)])))
 
 (module+ deserialize-info
-  (provide deserialize-delayed-element))
-(define deserialize-delayed-element
+  (provide deserialize-resolve-element))
+(define deserialize-resolve-element
   (make-deserialize-info values values))
 
-(provide delayed-element-content)
-(define (delayed-element-content e ri)
+(provide resolve-element-content)
+(define (resolve-element-content e ri)
   (hash-ref (resolve-info-delays ri) e))
 
-(provide delayed-block-blocks)
-(define (delayed-block-blocks p ri)
+(provide resolve-block-blocks)
+(define (resolve-block-blocks p ri)
   (hash-ref (resolve-info-delays ri) p))
 
 (provide current-serialize-resolve-info)
@@ -480,9 +480,9 @@
 
 ;; ----------------------------------------
 
-;; Delayed index entry also has special serialization support.
-;; It uses the same delay -> value table as delayed-element
-(define-struct delayed-index-desc (resolve)
+;; Resolve index entry also has special serialization support.
+;; It uses the same delay -> value table as resolve-element
+(define-struct resolve-index-desc (resolve)
   #:mutable
   #:property
   prop:serializable 
@@ -490,7 +490,7 @@
    (lambda (d)
      (let ([ri (current-serialize-resolve-info)])
        (unless ri
-         (error 'serialize-delayed-index-desc
+         (error 'serialize-resolve-index-desc
                 "current-serialize-resolve-info not set"))
        (with-handlers ([exn:fail:contract?
                         (lambda (exn)
@@ -498,18 +498,18 @@
                                  "serialization failed (wrong resolve info?); ~a"
                                  (exn-message exn)))])
          (vector
-          (delayed-element-content d ri)))))
-   #'deserialize-delayed-index-desc
+          (resolve-element-content d ri)))))
+   #'deserialize-resolve-index-desc
    #f
    (or (current-load-relative-directory) (current-directory)))
   #:transparent)
 
 (provide/contract
- (struct delayed-index-desc ([resolve (any/c part? resolve-info? . -> . any)])))
+ (struct resolve-index-desc ([resolve (any/c part? resolve-info? . -> . any)])))
 
 (module+ deserialize-info
-  (provide deserialize-delayed-index-desc))
-(define deserialize-delayed-index-desc
+  (provide deserialize-resolve-index-desc))
+(define deserialize-resolve-index-desc
   (make-deserialize-info values values))
 
 ;; ----------------------------------------
@@ -636,7 +636,7 @@
        [(multiarg-element? c) (content->port op (multiarg-element-contents c))]
        [(list? c) (for-each (lambda (e) (content->port op e)) c)]
        [(part-relative-element? c) (content->port op ((part-relative-element-plain c)))]
-       [(delayed-element? c) (content->port op ((delayed-element-plain c)))]
+       [(resolve-element? c) (content->port op ((resolve-element-plain c)))]
        [(string? c) (display c op)]
        [else (display (case c
                         [(mdash) "---"]
@@ -666,8 +666,8 @@
        [(list? c) (for-each (lambda (e)
                               (content->port op e renderer sec ri))
                              c)]
-       [(delayed-element? c)
-        (content->port op (delayed-element-content c ri) renderer sec ri)]
+       [(resolve-element? c)
+        (content->port op (resolve-element-content c ri) renderer sec ri)]
        [(part-relative-element? c)
         (content->port op (part-relative-element-content c ri) renderer sec ri)]
        [else (content->port op c)])]))
@@ -730,7 +730,7 @@
     [(list? s) (for/fold ([v 0]) ([s (in-list s)]) (+ v (content-width s)))]
     [(element? s) (content-width (element-content s))]
     [(multiarg-element? s) (content-width (multiarg-element-contents s))]
-    [(delayed-element? s) (content-width ((delayed-element-sizer s)))]
+    [(resolve-element? s) (content-width ((resolve-element-sizer s)))]
     [(part-relative-element? s) (content-width ((part-relative-element-sizer s)))]
     [else 1]))
 
@@ -747,7 +747,7 @@
     [(itemization? p) (itemization-width p)]
     [(nested-flow? p) (nested-flow-width p)]
     [(compound-paragraph? p) (compound-paragraph-width p)]
-    [(delayed-block? p) 1]
+    [(resolve-block? p) 1]
     [(eq? p 'cont) 0]))
 
 (define (table-width p)

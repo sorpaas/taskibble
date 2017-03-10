@@ -206,8 +206,8 @@
         [(compound-paragraph? p)
          (extract-style-style-files (compound-paragraph-style p) ht pred extract)
          (extract-flow-style-files (compound-paragraph-blocks p) d ri ht pred extract)]
-        [(delayed-block? p)
-         (let ([v (delayed-block-blocks p ri)])
+        [(resolve-block? p)
+         (let ([v (resolve-block-blocks p ri)])
            (extract-block-style-files v d ri ht pred extract))]
         [(traverse-block? p)
          (extract-block-style-files (traverse-block-block p ri) d ri ht pred extract)]
@@ -234,8 +234,8 @@
        [(list? e)
         (for ([e (in-list e)])
           (extract-content-style-files e d ri ht pred extract))]
-       [(delayed-element? e)
-        (extract-content-style-files (delayed-element-content e ri) d ri ht pred extract)]
+       [(resolve-element? e)
+        (extract-content-style-files (resolve-element-content e ri) d ri ht pred extract)]
        [(traverse-element? e)
         (extract-content-style-files (traverse-element-content e ri) d ri ht pred extract)]
        [(part-relative-element? e)
@@ -448,7 +448,7 @@
             [(itemization? p) (traverse-itemization p fp)]
             [(nested-flow? p) (traverse-nested-flow p fp)]
             [(compound-paragraph? p) (traverse-compound-paragraph p fp)]
-            [(delayed-block? p) fp]
+            [(resolve-block? p) fp]
             [(traverse-block? p) (traverse-force fp p 
                                                  (traverse-block-traverse p) 
                                                  (lambda (p fp) (traverse-block p fp)))]
@@ -664,7 +664,7 @@
             [(itemization? p) (collect-itemization p ci)]
             [(nested-flow? p) (collect-nested-flow p ci)]
             [(compound-paragraph? p) (collect-compound-paragraph p ci)]
-            [(delayed-block? p) (void)]
+            [(resolve-block? p) (void)]
             [(traverse-block? p) (collect-block (traverse-block-block p ci) ci)]
             [else (collect-paragraph p ci)]))
 
@@ -754,8 +754,8 @@
         [(itemization? p) (resolve-itemization p d ri)]
         [(nested-flow? p) (resolve-nested-flow p d ri)]
         [(compound-paragraph? p) (resolve-compound-paragraph p d ri)]
-        [(delayed-block? p) 
-         (let ([v ((delayed-block-resolve p) this d ri)])
+        [(resolve-block? p)
+         (let ([v ((resolve-block-resolve p) this d ri)])
            (hash-set! (resolve-info-delays ri) p v)
            (resolve-block v d ri))]
         [(traverse-block? p) (resolve-block (traverse-block-block p ri) d ri)]
@@ -781,9 +781,9 @@
       (cond
         [(part-relative-element? i)
          (resolve-content (part-relative-element-content i ri) d ri)]
-        [(delayed-element? i)
+        [(resolve-element? i)
          (resolve-content (or (hash-ref (resolve-info-delays ri) i #f)
-                              (let ([v ((delayed-element-resolve i) this d ri)])
+                              (let ([v ((resolve-element-resolve i) this d ri)])
                                 (hash-set! (resolve-info-delays ri) i v)
                                 v))
                           d ri)]
@@ -796,8 +796,8 @@
          (cond
            [(index-element? i)
             (let ([e (index-element-desc i)])
-              (when (delayed-index-desc? e)
-                (let ([v ((delayed-index-desc-resolve e) this d ri)])
+              (when (resolve-index-desc? e)
+                (let ([v ((resolve-index-desc-resolve e) this d ri)])
                   (hash-set! (resolve-info-delays ri) e v))))]
            [(link-element? i)
             (resolve-get d ri (link-element-tag i))])
@@ -914,8 +914,8 @@
        [(itemization? p) (render-itemization p part ri)]
        [(nested-flow? p) (render-nested-flow p part ri starting-item?)]
        [(compound-paragraph? p) (render-compound-paragraph p part ri starting-item?)]
-       [(delayed-block? p) 
-        (render-block (delayed-block-blocks p ri) part ri starting-item?)]
+       [(resolve-block? p)
+        (render-block (resolve-block-blocks p ri) part ri starting-item?)]
        [(traverse-block? p) 
         (render-block (traverse-block-block p ri) part ri starting-item?)]
        [else (render-paragraph p part ri)]))
@@ -953,8 +953,8 @@
          (render-content (element-content i) part ri)]
         [(multiarg-element? i)
          (render-content (multiarg-element-contents i) part ri)]
-        [(delayed-element? i)
-         (render-content (delayed-element-content i ri) part ri)]
+        [(resolve-element? i)
+         (render-content (resolve-element-content i ri) part ri)]
         [(traverse-element? i)
          (render-content (traverse-element-content i ri) part ri)]
         [(part-relative-element? i)
