@@ -322,7 +322,7 @@
 (define (traverse-block-block b i)
   (cond
    [(collect-info? i)
-    (let ([p (hash-ref (collect-info-fp i) b #f)])
+    (let ([p (hash-ref (hash-ref (collect-info-fp i) 'scribble:traverse #hasheq()) b #f)])
       (if (block? p)
           p
           (error 'traverse-block-block
@@ -377,7 +377,7 @@
 (define (traverse-element-content e i)
   (cond
    [(collect-info? i)
-    (let ([c (hash-ref (collect-info-fp i) e #f)])
+    (let ([c (hash-ref (hash-ref (collect-info-fp i) 'scribble:traverse #hasheq()) e #f)])
       (if (content? c)
           c
           (error 'traverse-block-block
