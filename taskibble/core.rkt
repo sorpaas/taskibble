@@ -288,6 +288,13 @@
 
 ;; ----------------------------------------
 
+
+(define traverse-get/c
+  (->* (symbol? any/c) () any/c))
+
+(define traverse-set/c
+  (->* (symbol? any/c) (#:local boolean?) any/c))
+
 ;; Traverse block has special serialization support:
 (define-struct traverse-block (traverse)
   #:property
@@ -306,8 +313,8 @@
 
 (define block-traverse-procedure/c
   (recursive-contract
-   ((symbol? any/c . -> . any/c)
-    (symbol? any/c . -> . any)
+   (traverse-get/c
+    traverse-set/c
     . -> . (or/c block-traverse-procedure/c
                  block?))))
 
@@ -354,16 +361,10 @@
    (or (current-load-relative-directory) (current-directory)))
   #:transparent)
 
-(define element-traverse-get/c
-  (->* (symbol? any/c) () any/c))
-
-(define element-traverse-set/c
-  (->* (symbol? any/c) (#:local boolean?) any/c))
-
 (define element-traverse-procedure/c
   (recursive-contract
-   (element-traverse-get/c
-    element-traverse-set/c
+   (traverse-get/c
+    traverse-set/c
     . -> . (or/c element-traverse-procedure/c
                  content?))))
 
