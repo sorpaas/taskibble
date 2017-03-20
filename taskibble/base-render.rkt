@@ -416,8 +416,8 @@
     ;; document-order traversal
 
     (define/public (traverse ds fns)
-      (let loop ([fp #hash(('scribble:local . #hasheq())
-                           ('scribble:traverse . #hasheq()))])
+      (let loop ([fp (hash 'scribble:local #hasheq()
+                           'scribble:traverse #hasheq())])
         (let ([fp2 (start-traverse ds fns fp)])
           (if (equal? fp fp2)
               fp
