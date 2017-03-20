@@ -3,6 +3,7 @@
 (require "core.rkt"
          "private/render-utils.rkt"
          racket/list
+         racket/hash
          mzlib/class
          mzlib/serialize
          scheme/file
