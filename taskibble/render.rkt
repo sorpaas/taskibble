@@ -22,6 +22,7 @@
            #:image-preferences (listof (or/c 'ps 'pdf 'png 'svg 'gif))
            #:redirect (or/c #f string?)
            #:redirect-main (or/c #f string?)
+           #:only-public boolean?
            #:directory-depth exact-nonnegative-integer?
            #:xrefs (listof xref?)
            #:info-in-files (listof path-string?)
@@ -29,6 +30,22 @@
            #:quiet? any/c
            #:warn-undefined? any/c)
           . ->* . void?)])
+
+(define inside-public-part (make-parameter #f))
+
+(define (part-accept-public? part)
+  (ormap (lambda (x) (equal? x 'accept-public))
+         (part-categories part)))
+
+(define (part-public? part)
+  (ormap (lambda (x) (equal? x 'public))
+         (part-categories part)))
+
+(define (part-has-public? part)
+  (ormap (lambda (part)
+           (or (and (part-accept-public? part) (part-has-public? part))
+               (part-public? part)))
+         (part-parts part)))
 
 (define (render docs
                 names
@@ -40,6 +57,7 @@
                 #:style-extra-files [style-extra-files null]
                 #:extra-files [extra-files null]
                 #:image-preferences [image-preferences null]
+                #:only-public [only-public #f]
                 #:redirect [redirect #f]
                 #:redirect-main [redirect-main #f]
                 #:directory-depth [directory-depth 0]
@@ -49,7 +67,20 @@
                 #:quiet? [quiet? #t]
                 #:warn-undefined? [warn-undefined? (not quiet?)])
   (when dest-dir (make-directory* dest-dir))
-  (let ([renderer (new (render-mixin render%)
+  (parameterize ([render-part-hook
+                  (lambda (render part)
+                    (cond
+                      [(equal? only-public #f) (render part)]
+                      [(equal? (inside-public-part) #t)
+                       (render part)]
+                      [(part-public? part)
+                       (parameterize ([inside-public-part #t])
+                         (render part))]
+                      [(and (part-accept-public? part)
+                            (part-has-public? part))
+                       (render part)]
+                      [else '()]))])
+    (let ([renderer (new (render-mixin render%)
                        [dest-dir dest-dir]
                        [prefix-file prefix-file]
                        [style-file style-file]
@@ -57,39 +88,39 @@
                        [extra-files extra-files]
                        [image-preferences image-preferences]
                        [helper-file-prefix helper-file-prefix])])
-    (when redirect
-      (send renderer set-external-tag-path redirect))
-    (when redirect-main
-      (send renderer set-external-root-url redirect-main))
-    (unless (zero? directory-depth)
-      (send renderer set-directory-depth directory-depth))
-    (unless quiet?
-      (send renderer report-output!))
-    (let* ([fns (map (lambda (fn)
-                       (let-values ([(base name dir?) (split-path fn)])
-                         (let ([fn (path-replace-suffix
-                                    name
-                                    (send renderer get-suffix))])
-                           (if dest-dir (build-path dest-dir fn) fn))))
-                     names)]
-           [fp (send renderer traverse docs fns)]
-           [info (send renderer collect docs fns fp)])
-      (for ([file (in-list info-input-files)])
-        (let ([s (with-input-from-file file read)])
-          (send renderer deserialize-info s info)))
-      (for ([xr (in-list xrefs)])
-        (xref-transfer-info renderer info xr))
-      (let ([r-info (send renderer resolve docs fns info)])
-        (send renderer render docs fns r-info)
-        (when info-output-file
-          (let ([s (send renderer serialize-info r-info)])
-            (with-output-to-file info-output-file
-              #:exists 'truncate/replace
-              (lambda () (write s)))))
-        (when warn-undefined?
-          (let ([undef (send renderer get-undefined r-info)])
-            (unless (null? undef)
-              (eprintf "Warning: some cross references may be broken due to undefined tags:\n")
-              (for ([t (in-list undef)])
-                (eprintf " ~s\n" t))))))
-      (void))))
+      (when redirect
+        (send renderer set-external-tag-path redirect))
+      (when redirect-main
+        (send renderer set-external-root-url redirect-main))
+      (unless (zero? directory-depth)
+        (send renderer set-directory-depth directory-depth))
+      (unless quiet?
+        (send renderer report-output!))
+      (let* ([fns (map (lambda (fn)
+                         (let-values ([(base name dir?) (split-path fn)])
+                           (let ([fn (path-replace-suffix
+                                      name
+                                      (send renderer get-suffix))])
+                             (if dest-dir (build-path dest-dir fn) fn))))
+                       names)]
+             [fp (send renderer traverse docs fns)]
+             [info (send renderer collect docs fns fp)])
+        (for ([file (in-list info-input-files)])
+          (let ([s (with-input-from-file file read)])
+            (send renderer deserialize-info s info)))
+        (for ([xr (in-list xrefs)])
+          (xref-transfer-info renderer info xr))
+        (let ([r-info (send renderer resolve docs fns info)])
+          (send renderer render docs fns r-info)
+          (when info-output-file
+            (let ([s (send renderer serialize-info r-info)])
+              (with-output-to-file info-output-file
+                #:exists 'truncate/replace
+                (lambda () (write s)))))
+          (when warn-undefined?
+            (let ([undef (send renderer get-undefined r-info)])
+              (unless (null? undef)
+                (eprintf "Warning: some cross references may be broken due to undefined tags:\n")
+                (for ([t (in-list undef)])
+                  (eprintf " ~s\n" t))))))
+        (void)))))

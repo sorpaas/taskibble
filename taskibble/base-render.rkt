@@ -14,9 +14,11 @@
          "render-struct.rkt")
 
 (provide render%
-         render<%>)
+         render<%>
+         render-part-hook)
 
 (define current-part (make-parameter null))
+(define render-part-hook (make-parameter (lambda (render part) (render part))))
 
 (define render<%>
   (interface ()
@@ -870,9 +872,12 @@
       (render-part d ri))
 
     (define/public (render-part d ri)
-      (parameterize ([current-tag-prefixes
-                      (extend-prefix d (fresh-tag-render-context? d ri))])
-        (render-part-content d ri)))
+      ((render-part-hook)
+       (lambda (d)
+         (parameterize ([current-tag-prefixes
+                         (extend-prefix d (fresh-tag-render-context? d ri))])
+           (render-part-content d ri)))
+       d))
 
     (define/public (render-part-content d ri)
       (list
