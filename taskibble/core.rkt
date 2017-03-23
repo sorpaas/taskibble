@@ -214,6 +214,7 @@
 (provide-structs
  [part ([tag-prefix (or/c false/c string?)]
         [tags (listof tag?)]
+        [categories (listof symbol?)]
         [title-content (or/c false/c content?)]
         [style style?]
         [to-collect list?]

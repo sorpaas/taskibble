@@ -65,12 +65,13 @@
    [else (raise-argument-error who "(or/c style? string? symbol? (listof symbol?) #f)" s)]))
 
 (define (title #:tag [tag #f] #:tag-prefix [prefix #f] #:style [style plain]
-               #:version [version #f] #:date [date #f]
+               #:version [version #f] #:date [date #f] #:categories [categories '()]
                . str)
   (let ([content (decode-content str)])
     (make-title-decl (prefix->string prefix)
                      (convert-tag tag content)
                      version
+                     categories
                      (let ([s (convert-part-style 'title style)])
                        (if date
                            (make-style (style-name s)
@@ -80,28 +81,34 @@
                      content)))
 
 (define (section #:tag [tag #f] #:tag-prefix [prefix #f] #:style [style plain]
+                 #:categories [categories '()]
                  . str)
   (let ([content (decode-content str)])
     (make-part-start 0 (prefix->string prefix)
                      (convert-tag tag content)
+                     categories
                      (convert-part-style 'section style)
                      content)))
 
 (define (subsection #:tag [tag #f] #:tag-prefix [prefix #f] #:style [style plain]
+                    #:categories [categories '()]
                     . str)
   (let ([content (decode-content str)])
     (make-part-start 1
                      (prefix->string prefix)
                      (convert-tag tag content)
+                     categories
                      (convert-part-style 'subsection style)
                      content)))
 
 (define (subsubsection #:tag [tag #f] #:tag-prefix [prefix #f]
+                       #:categories [categories '()]
                        #:style [style plain] . str)
   (let ([content (decode-content str)])
     (make-part-start 2
                      (prefix->string prefix)
                      (convert-tag tag content)
+                     categories
                      (convert-part-style 'subsubsection style)
                      content)))
 
@@ -816,6 +823,7 @@
 (define (index-section #:title [title "Index"] #:tag [tag #f])
   (make-part #f
              `((part ,(or tag "doc-index")))
+             '()
              (list title)
              (make-style 'index '(unnumbered))
              null
