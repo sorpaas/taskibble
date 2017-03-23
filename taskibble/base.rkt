@@ -18,18 +18,20 @@
 (define-syntax-rule (title-like-contract)
   (->* ()
        (#:tag (or/c #f string? (listof string?))
-              #:tag-prefix (or/c #f string? module-path?)
-              #:style (or/c style? string? symbol? (listof symbol?) #f))
+        #:tag-prefix (or/c #f string? module-path?)
+        #:categories (listof symbol?)
+        #:style (or/c style? string? symbol? (listof symbol?) #f))
        #:rest (listof pre-content?)
        part-start?))
 
 (provide/contract
  [title (->* ()
              (#:tag (or/c #f string? (listof string?))
-                    #:tag-prefix (or/c #f string? module-path?)
-                    #:style (or/c style? string? symbol? (listof symbol?) #f)
-                    #:version (or/c string? #f)
-                    #:date (or/c string? #f))
+              #:tag-prefix (or/c #f string? module-path?)
+              #:style (or/c style? string? symbol? (listof symbol?) #f)
+              #:categories (listof symbol?)
+              #:version (or/c string? #f)
+              #:date (or/c string? #f))
              #:rest (listof pre-content?)
              title-decl?)]
  [section (title-like-contract)]

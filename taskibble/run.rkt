@@ -1,6 +1,7 @@
 #lang racket/base
 (require "xref.rkt"
          "render.rkt"
+         "core.rkt"
          scheme/cmdline
          raco/command-name
          (prefix-in latex:    "latex-render.rkt")
@@ -23,6 +24,7 @@
 (define current-redirect-main      (make-parameter #f))
 (define current-directory-depth    (make-parameter 0))
 (define current-quiet              (make-parameter #f))
+(define current-category           (make-parameter #f))
 (define helper-file-prefix         (make-parameter #f))
 (define doc-command-line-arguments (make-parameter null))
 (define current-image-prefs        (make-parameter null)) ; reverse order
@@ -57,6 +59,8 @@
         (raise-user-error 'scribble (format "bad section depth: ~a" n)))
       (current-render-mixin (latex:make-render-part-mixin v)))]
    #:once-each
+   [("--category") category "output only part in those <category>"
+    (current-category (string->symbol category))]
    [("--dest") dir "write output in <dir>"
     (current-dest-directory dir)]
    [("--dest-name") name "write output as <name>"
@@ -127,11 +131,52 @@
                         files)
                    files)))))
 
+(define (part-of-current-category? docs)
+  (ormap (lambda (x) (equal? x (current-category))) (part-categories docs)))
+
+(define (filter-by-current-category docs)
+  (if (or (eq? (current-category) #f)
+          (part-of-current-category? docs))
+      docs
+      (let ([reduced (make-part (part-tag-prefix docs)
+                                (part-tags docs)
+                                (part-categories docs)
+                                (part-title-content docs)
+                                (part-style docs)
+                                (part-to-collect docs)
+                                '()
+                                (filter (lambda (x)
+                                          (not (void? x)))
+                                        (map filter-by-current-category (part-parts docs))))])
+        (if (or (and (equal? (length (part-parts docs)) 0) (part-of-current-category? docs))
+                (> (length (part-parts reduced)) 0))
+            reduced
+            (void)))))
+
 (define (build-docs docs files)
   (when (and (current-dest-name)
              ((length files) . > . 1))
     (raise-user-error 'scribble "cannot supply a destination name with multiple inputs"))
-  (render docs
+  (displayln (map (lambda (doc)
+                 (make-part (part-tag-prefix doc)
+                            (part-tags doc)
+                            (part-categories doc)
+                            (part-title-content doc)
+                            (part-style doc)
+                            (part-to-collect doc)
+                            (part-blocks doc)
+                            (filter (lambda (x) (not (void? x)))
+                                    (map filter-by-current-category (part-parts doc))))) docs))
+  (render (map (lambda (doc)
+                 (make-part (part-tag-prefix doc)
+                            (part-tags doc)
+                            (part-categories doc)
+                            (part-title-content doc)
+                            (part-style doc)
+                            (part-to-collect doc)
+                            (part-blocks doc)
+                            (filter (lambda (x) (not (void? x)))
+                                    (map filter-by-current-category (part-parts doc))))) docs)
           (map (lambda (fn)
                  (let-values ([(base name dir?) (split-path fn)])
                    (or (current-dest-name) name)))
