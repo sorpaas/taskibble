@@ -24,7 +24,7 @@
 (define current-redirect-main      (make-parameter #f))
 (define current-directory-depth    (make-parameter 0))
 (define current-quiet              (make-parameter #f))
-(define current-category           (make-parameter #f))
+(define current-render-part-hook   (make-parameter #f))
 (define helper-file-prefix         (make-parameter #f))
 (define doc-command-line-arguments (make-parameter null))
 (define current-image-prefs        (make-parameter null)) ; reverse order
@@ -59,8 +59,8 @@
         (raise-user-error 'scribble (format "bad section depth: ~a" n)))
       (current-render-mixin (latex:make-render-part-mixin v)))]
    #:once-each
-   [("--category") category "output only part in those <category>"
-    (current-category (string->symbol category))]
+   [("--render-part-hook") render-part-hook "set a render part hook for selective rendering"
+    (current-render-part-hook (dynamic-require `(file ,render-part-hook) 'render-part-hook))]
    [("--dest") dir "write output in <dir>"
     (current-dest-directory dir)]
    [("--dest-name") name "write output as <name>"
@@ -148,7 +148,7 @@
           #:style-extra-files (reverse (current-style-extra-files))
           #:extra-files (reverse (current-extra-files))
           #:helper-file-prefix (helper-file-prefix)
-          #:only-public (if (current-category) #t #f)
+          #:render-part-hook (current-render-part-hook)
           #:redirect (and (current-html) (current-redirect))
           #:redirect-main (and (current-html) (current-redirect-main))
           #:directory-depth (current-directory-depth)

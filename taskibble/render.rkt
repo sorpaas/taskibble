@@ -3,6 +3,7 @@
 (require "core.rkt"
          "base-render.rkt"
          "xref.rkt"
+         "render-struct.rkt"
          racket/file
          racket/class
          racket/contract/base
@@ -22,7 +23,7 @@
            #:image-preferences (listof (or/c 'ps 'pdf 'png 'svg 'gif))
            #:redirect (or/c #f string?)
            #:redirect-main (or/c #f string?)
-           #:only-public boolean?
+           #:render-part-hook any/c
            #:directory-depth exact-nonnegative-integer?
            #:xrefs (listof xref?)
            #:info-in-files (listof path-string?)
@@ -30,22 +31,6 @@
            #:quiet? any/c
            #:warn-undefined? any/c)
           . ->* . void?)])
-
-(define inside-public-part (make-parameter #f))
-
-(define (part-accept-public? part)
-  (ormap (lambda (x) (equal? x 'accept-public))
-         (part-categories part)))
-
-(define (part-public? part)
-  (ormap (lambda (x) (equal? x 'public))
-         (part-categories part)))
-
-(define (part-has-public? part)
-  (ormap (lambda (part)
-           (or (and (part-accept-public? part) (part-has-public? part))
-               (part-public? part)))
-         (part-parts part)))
 
 (define (render docs
                 names
@@ -57,7 +42,7 @@
                 #:style-extra-files [style-extra-files null]
                 #:extra-files [extra-files null]
                 #:image-preferences [image-preferences null]
-                #:only-public [only-public #f]
+                #:render-part-hook [render-part-hook* #f]
                 #:redirect [redirect #f]
                 #:redirect-main [redirect-main #f]
                 #:directory-depth [directory-depth 0]
@@ -67,19 +52,7 @@
                 #:quiet? [quiet? #t]
                 #:warn-undefined? [warn-undefined? (not quiet?)])
   (when dest-dir (make-directory* dest-dir))
-  (parameterize ([render-part-hook
-                  (lambda (render part)
-                    (cond
-                      [(equal? only-public #f) (render part)]
-                      [(equal? (inside-public-part) #t)
-                       (render part)]
-                      [(part-public? part)
-                       (parameterize ([inside-public-part #t])
-                         (render part))]
-                      [(and (part-accept-public? part)
-                            (part-has-public? part))
-                       (render part)]
-                      [else '()]))])
+  (parameterize ([render-part-hook (or render-part-hook* (render-part-hook))])
     (let ([renderer (new (render-mixin render%)
                        [dest-dir dest-dir]
                        [prefix-file prefix-file]

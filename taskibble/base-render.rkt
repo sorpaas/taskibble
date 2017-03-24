@@ -14,11 +14,9 @@
          "render-struct.rkt")
 
 (provide render%
-         render<%>
-         render-part-hook)
+         render<%>)
 
 (define current-part (make-parameter null))
-(define render-part-hook (make-parameter (lambda (render part) (render part))))
 
 (define render<%>
   (interface ()
