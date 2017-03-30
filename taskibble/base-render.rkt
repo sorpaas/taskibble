@@ -16,7 +16,7 @@
 (provide render%
          render<%>)
 
-(define current-part (make-parameter null))
+(define current-parts (make-parameter '()))
 
 (define render<%>
   (interface ()
@@ -428,7 +428,7 @@
         (traverse-part d fp)))
 
     (define/public (traverse-part d fp)
-      (parameterize ([current-part d])
+      (parameterize ([current-parts (cons d (current-parts))])
         (let* ([fp (if (part-title-content d)
                        (traverse-content (part-title-content d) fp)
                        fp)]
@@ -491,27 +491,35 @@
              [v (hash-ref allv p (lambda () proc))])
         (if (procedure? v)
             (let ([fp fp])
-              (let ([v2 (v (lambda (key default)
-                             (if (eq? key 'scribble:current-render-mode)
-                                 (current-render-mode)
-                                 (let* ([alll (hash-ref fp 'scribble:local #hasheq())]
-                                        [lp (hash-ref alll (current-part) #hasheq())])
-                                   (hash-ref lp key
-                                             (lambda () (hash-ref fp key default))))))
-                           (lambda (key #:local [local #f] val)
-                             (if (or (eq? key 'scribble:current-render-mode)
-                                     (eq? key 'scribble:local))
-                                 (raise-mismatch-error
-                                  'traverse-info-set! 
-                                  "cannot set value for built-in key: "
-                                  key)
-                                 (if local
-                                     (let* ([alll (hash-ref fp 'scribble:local #hasheq())]
-                                            [lp (hash-ref alll (current-part) #hasheq())])
-                                       (set! lp (hash-set lp key val))
-                                       (set! alll (hash-set alll (current-part) lp))
-                                       (set! fp (hash-set fp 'scribble:local alll)))
-                                     (set! fp (hash-set fp key val))))))])
+
+              (define (get key default)
+                (if (eq? key 'scribble:current-render-mode)
+                    (current-render-mode)
+                    (if (empty? (current-parts))
+                        (hash-ref fp key default)
+                        (let* ([alll (hash-ref fp 'scribble:local #hasheq())]
+                               [lp (hash-ref alll (first (current-parts)) #hasheq())])
+                          (hash-ref lp key
+                                    (lambda ()
+                                      (parameterize ([current-parts (rest (current-parts))])
+                                        (get key default))))))))
+
+              (define (set key #:local [local #f] val)
+                (if (or (eq? key 'scribble:current-render-mode)
+                        (eq? key 'scribble:local))
+                    (raise-mismatch-error
+                     'traverse-info-set!
+                     "cannot set value for built-in key: "
+                     key)
+                    (if local
+                        (let* ([alll (hash-ref fp 'scribble:local #hasheq())]
+                               [lp (hash-ref alll (first (current-parts)) #hasheq())])
+                          (set! lp (hash-set lp key val))
+                          (set! alll (hash-set alll (first (current-parts)) lp))
+                          (set! fp (hash-set fp 'scribble:local alll)))
+                        (set! fp (hash-set fp key val)))))
+
+              (let ([v2 (v get set)])
                 (let ([fp (hash-set fp 'scribble:traverse
                                     (hash-set allv p v2))])
                   (if (procedure? v2)
