@@ -619,7 +619,7 @@
 (define current-tag-prefixes (make-parameter null))
 (define (add-current-tag-prefix t)
   (let ([l (current-tag-prefixes)])
-    (if (null? l)
+    (if (or (null? l) (equal? (car t) 'absolute))
         t
         (cons (car t) (append l (cdr t))))))
 

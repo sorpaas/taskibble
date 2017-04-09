@@ -310,6 +310,14 @@
           (when (target-element? e)
             (printf "\\label{t:~a}"
                     (t-encode (add-current-tag-prefix (tag-key (target-element-tag e) ri)))))
+          (when (and (link-element? e)
+                     (not (let ([es (if (style? (element-style e))
+                                        (style-name (element-style e))
+                                        (element-style e))])
+                            (string? es)))
+                     (not part-label?))
+            (printf "\\hyperref[t:~a]{"
+                    (t-encode (add-current-tag-prefix (tag-key (link-element-tag e) ri)))))
           (when part-label?
             (define-values (dest ext?) (resolve-get/ext? part ri (link-element-tag e)))
             (let* ([number (and dest (vector-ref dest 2))]
@@ -523,14 +531,21 @@
                       (loop (cdr l) tt?)
                       (for ([l (in-list (command-extras-arguments (car l)))])
                         (printf "{~a}" l))]
-                     [else (loop (cdr l) tt?)]))))))
+                     [else (loop (cdr l) tt?)])))))
+          (when (and (link-element? e)
+                     (not (let ([es (if (style? (element-style e))
+                                        (style-name (element-style e))
+                                        (element-style e))])
+                            (string? es)))
+                     (not part-label?))
+            (printf "}")))
         (when part-label?
           (printf "}"))
         (when (and (link-element? e)
                    (show-link-page-numbers)
                    (not (done-link-page-numbers)))
           (printf ", \\pageref{t:~a}"
-                  (t-encode 
+                  (t-encode
                    (let ([v (resolve-get part ri (link-element-tag e))])
                      (and v (vector-ref v 1))))))
         null))
